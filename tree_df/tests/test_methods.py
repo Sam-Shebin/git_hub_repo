@@ -4,6 +4,8 @@ from unittest import TestCase
 from tree_df.methods import treenode_to_dataframe,dataframe_to_treenode
 import pandas as pd
 
+import cProfile
+import re
 
 class unit_test_dataframe_to_treenode_85_otsu_tree(TestCase):
 

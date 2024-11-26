@@ -1,6 +1,8 @@
 import pandas as pd
 import skbio
 from skbio import TreeNode
+import cProfile
+
 
 def treenode_to_dataframe(tree_node):
     rows_for_dataframe = []
@@ -78,3 +80,10 @@ def dataframe_to_treenode(dataframe):
                         dictionary_1[y[0]].append(node)
 
     return root
+
+
+expected_tree = skbio.TreeNode.read('../85_otus.tree', format='newick')
+expected_tree_df = treenode_to_dataframe(expected_tree)
+
+#cProfile.run('treenode_to_dataframe(expected_tree)')
+cProfile.run('dataframe_to_treenode(expected_tree_df)')
