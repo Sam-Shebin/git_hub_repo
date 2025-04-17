@@ -247,3 +247,102 @@ class TestTipToRootConversion(TestCase):
         actual_node_count = self.reconstructed_tree.count()
         self.assertEqual(actual_node_count, expected_node_count)
 
+    def test_all_nodes_present_in_reconstructed_tree(self):
+        tips_to_keep = ['c', 'd']
+        reconstructed = tip_to_root_conversion(self.df_tree, tips_to_keep)
+
+        # Create expected tree by shearing original tree without pruning
+        expected = self.tree_root.shear(tips_to_keep, prune=False)
+
+        # Collect all node names from both trees (internal + tips)
+        expected_node_names = {n.name for n in expected.traverse() if n.name is not None}
+        reconstructed_node_names = {n.name for n in reconstructed.traverse() if n.name is not None}
+
+        # Assert all expected nodes are present
+        self.assertEqual(expected_node_names, reconstructed_node_names)
+
+    def test_rfd_of_reconstructed_tree(self):
+        # Tips to reconstruct from
+        tips_to_keep = ['c', 'd']
+
+        # Reconstruct from DataFrame
+        reconstructed = tip_to_root_conversion(self.df_tree, tips_to_keep)
+
+        # Generate expected tree via shear without pruning
+        expected = self.tree_root.shear(tips_to_keep, prune=False)
+
+        # Compare RF distance (should be 0.0 if topologies are identical)
+        rf_distance = expected.compare_rfd(reconstructed)
+        self.assertEqual(rf_distance, 0.0, f"Expected RF distance of 0.0 but got {rf_distance}")
+
+
+class TestTipToRootConversion_85OTUs(TestCase):
+    def setUp(self):
+        # Load tree from file
+        self.tree_path = 'C:/Users/shebi/OneDrive/Desktop/knight_lab/git_hub_repo/85_otus_unannotated.tree'
+        self.tree_root = TreeNode.read(self.tree_path, format='newick')
+        self.tips_to_keep = ['312237', '21']
+
+        # Convert tree to dataframe
+        self.df_tree = treenode_to_dataframe(self.tree_root)
+
+        # Reconstruct tree from the selected tips
+        self.reconstructed_tree = tip_to_root_conversion(self.df_tree, self.tips_to_keep)
+
+        # Expected tree using shear with prune=False
+        self.expected_tree = self.tree_root.shear(self.tips_to_keep, prune=False)
+
+    def test_all_nodes_present(self):
+        """Ensure all nodes in expected tree are present in reconstructed tree."""
+        expected_names = {n.name for n in self.expected_tree.traverse() if n.name is not None}
+        reconstructed_names = {n.name for n in self.reconstructed_tree.traverse() if n.name is not None}
+        self.assertEqual(expected_names, reconstructed_names)
+
+    def test_rf_distance(self):
+        """RF distance between expected and reconstructed should be 0.0 (topologically identical)."""
+        rf_distance = self.expected_tree.compare_rfd(self.reconstructed_tree)
+        self.assertEqual(rf_distance, 0.0, f"Expected RF distance of 0.0 but got {rf_distance}")
+
+    def test_tips_present(self):
+        """Check that the tips we requested are present in the reconstructed tree."""
+        reconstructed_tips = {tip.name for tip in self.reconstructed_tree.tips()}
+        for tip in self.tips_to_keep:
+            self.assertIn(tip, reconstructed_tips)
+
+    def test_branch_length_preservation(self):
+        tips_to_keep = ['312237', '21']
+        reconstructed = tip_to_root_conversion(self.df_tree, tips_to_keep)
+
+        # Compare branch lengths for nodes with matching names
+        for node in reconstructed.traverse():
+            if node.name:
+                orig_node = self.tree_root.find(node.name)
+                self.assertEqual(node.length, orig_node.length,
+                                 f"Branch length mismatch at node {node.name}")
+
+    def test_ancestor_paths_match(self):
+        tips = ['312237', '21']
+        reconstructed = tip_to_root_conversion(self.df_tree, tips)
+
+        for tip in tips:
+            # Find the ancestor paths for the original tree
+            original_path = [n.name for n in self.tree_root.find(tip).ancestors()]
+            # Find the ancestor paths for the reconstructed tree
+            new_path = [n.name for n in reconstructed.find(tip).ancestors()]
+
+            # Assert that both ancestor paths match
+            self.assertEqual(original_path, new_path,
+                             f"Ancestor paths for tip {tip} do not match: original path {original_path}, new path {new_path}")
+
+    def test_full_tree_reconstruction(self):
+        # Get all tips from the original tree
+        all_tips = [tip.name for tip in self.tree_root.tips()]
+
+        # Reconstruct the tree using all the tips
+        reconstructed = tip_to_root_conversion(self.df_tree, all_tips)
+
+        # Calculate the RF distance between the original and reconstructed trees
+        rf_distance = self.tree_root.compare_rfd(reconstructed)
+
+        # Assert that the RF distance is 0, indicating the trees are identical
+        self.assertEqual(rf_distance, 0.0, f"RF distance is not 0.0; it is {rf_distance}")
