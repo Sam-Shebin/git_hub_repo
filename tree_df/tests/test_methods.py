@@ -36,7 +36,7 @@ class unit_test_dataframe_to_treenode_85_otsu_tree(TestCase):
                    {'parent': 1, 'node': 5, 'name': 'e', 'length': None}
                    ]
 
-        self.expected_tree = skbio.TreeNode.read('C:/Users/shebi/OneDrive/Desktop/knight_lab/git_hub_repo/85_otus.tree', format='newick')
+        self.expected_tree = skbio.TreeNode.read('path to 85_otus_unannotated.tree', format='newick')
         observed_tree = treenode_to_dataframe(self.expected_tree)
         self.observed_tree = dataframe_to_treenode(observed_tree)
 
@@ -233,16 +233,16 @@ class TestTipToRootConversion(TestCase):
         self.reconstructed_tree = tip_to_root_conversion(self.df_tree, [self.tip_name])
 
     def test_root_is_correct(self):
-        """Test that the reconstructed tree has the correct root."""
+        #Test that the reconstructed tree has the correct root.
         self.assertEqual(self.reconstructed_tree.root().name, self.tree_root.root().name)
 
     def test_tip_is_present(self):
-        """Test that the expected tip is present in the reconstructed tree."""
+        #Test that the expected tip is present in the reconstructed tree.
         tip_names = {tip.name for tip in self.reconstructed_tree.tips()}
         self.assertIn(self.tip_name, tip_names)
 
     def test_node_count(self):
-        """Test that the number of nodes in the reconstructed tree is as expected."""
+        #Test that the number of nodes in the reconstructed tree is as expected.
         expected_node_count = 3  # Nodes a, b, d
         actual_node_count = self.reconstructed_tree.count()
         self.assertEqual(actual_node_count, expected_node_count)
@@ -279,7 +279,7 @@ class TestTipToRootConversion(TestCase):
 class TestTipToRootConversion_85OTUs(TestCase):
     def setUp(self):
         # Load tree from file
-        self.tree_path = 'C:/Users/shebi/OneDrive/Desktop/knight_lab/git_hub_repo/85_otus_unannotated.tree'
+        self.tree_path = 'path to 85_otus_unannotated.tree'
         self.tree_root = TreeNode.read(self.tree_path, format='newick')
         self.tips_to_keep = ['312237', '21']
 
